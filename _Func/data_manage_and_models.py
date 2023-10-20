@@ -174,15 +174,15 @@ def new_data_to_model(df, _obj, _use_cols = use_cols):
     return X
 
 
-#Funci�n para predercir la probabilidad de cancelaci�n de una reserva con un modelo determinado
-def predict_cancel_prob(X):
-    model = joblib.load("cls_random_forest.pkl")
+#Funci�n para predecir la probabilidad de cancelaci�n de una reserva con un modelo determinado
+def predict_prob(X):
+    model = joblib.load("cls_compress_random_forest.pkl")
     return model.predict_proba(X[-1].reshape(1, -1))[0,1]
 
     #Predecimos la probabilidad de cancelaci�n de la nueva reserva
 
 #Fecha maxima para cancelar
-def cancel_date(X, _obj):
+def predict_date_score(X, _obj):
     model = joblib.load("reg_random_forest.pkl")
 
     _score = model.predict(X[-1].reshape(1, -1))
