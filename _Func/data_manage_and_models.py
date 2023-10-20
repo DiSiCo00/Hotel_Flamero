@@ -65,7 +65,7 @@ def train_model(data, _Y_use_cols, Reg_Cls_flag = True, _X_use_cols=use_cols ):
 
 
 # Recopilar datos de la nueva reserva:
-def new_Booking(df, room_type, noches, adultos, child, cunas, fecha_entrada):
+def new_Booking(df, room_type, regimen, noches, adultos, child, cunas, today, fecha_entrada):
     
     def get_horario():
         hora = int(datetime.now().strftime('%H'))
@@ -79,62 +79,112 @@ def new_Booking(df, room_type, noches, adultos, child, cunas, fecha_entrada):
             return 'Noche'
     
 
-    # Calcular la cantidad de ahbitaciones basados en la cantidad de personas
-    def habitaciones(adultos,childs,tipo_habitacion):
-        cont=0
+   #Función para definir la cantidad mínima de habitaciones a reservar en base a huespedes y tipo de habitación
+    def habitaciones(adultos, niños, tipo_habitacion):
+      cont = 1
 
-        #Si es una SUITE, caben 2 adultos y 2 ni�os o 3 adultos
-        if tipo_habitacion=='SUITE':
-            cont=childs//2
-            adultos-=cont*2+childs%2
-            cont+=adultos//3+((adultos%3)+1)//2
+      #Si es una SUITE, la capacidad máxima es de 2 adultos y 2 niños o 3 adultos
+      if tipo_habitacion == 'SUITE':
+        #Si hay más de 2 niños por adulto devolvemos error (0)
+        if adultos * 2 < niños:
+          return 0
 
-        if tipo_habitacion == 'DVC':
-            cont=adultos//2+adultos%2
-            childs-=cont
-        if childs>0:
-            cont+=childs//3+((childs%3)+1)//2
+        #Asignamos los niños de 2 en 2 y dos adultos por habitación
+        cont = niños // 2 + niños % 2
+        adultos -= cont * 2
 
-        if tipo_habitacion=='DVM':
-            cont=adultos//2+adultos%2
+        #Asignamos habitaciones de 3 adultos
+        if  adultos > 0:
+          cont += adultos // 3
+          adultos = adultos % 3
 
-        if tipo_habitacion=='IND':
-            cont=adultos
+          #Última habitación si sobran adultos
+          if adultos > 0:
+            cont += 1
 
-        if tipo_habitacion == 'A':
-            cont=adultos//4+((adultos%4)+2)//3
-            childs-=cont+adultos%4
-        if childs>0:
-            cont+=childs//3+((childs%3)+1)//2
+      #Si es una habitación DELUXE VISTA COTO, la capacidad máxima es de 2 adultos y 1 niño
+      if tipo_habitacion == 'DVC':
+        #Si hay más niños que adultos devolvemos error (0)
+        if adultos < niños:
+          return 0
 
-        if tipo_habitacion in ('EC','EM','DSC','DSM'):
-            cont+=adultos//3+((adultos%3)+1)//2
-            childs-=cont+adultos%3
-        if childs>0:
-            cont+=childs//2+childs%2
+        #Asignamos una habitación por niño y 2 adultos por habitación
+        cont = niños
+        adultos -= cont * 2
 
-        return cont
+        #Asignamos habitaciones de 2 adultos
+        if  adultos > 0:
+          cont += adultos // 2 + adultos % 2
 
-    av_regimen = df["R_Factura"].loc[df['Tip_Hab_Fra']== room_type].value_counts(normalize=True)
-    regimen = random.choices(av_regimen.index, av_regimen.values, k=1)
+      #Si es una habitación DELUXE VISTA MAR, la capacidad máxima es de 2 adultos. No se permiten niños
+      if tipo_habitacion == 'DVM':
+        #Asignamos habitaciones de 2 adultos
+        cont = adultos // 2 + adultos % 2
+
+      #Si es una habitación INDIVIDUAL, la capacidad máxima es de 1 adulto. No se permiten niños
+      if tipo_habitacion == 'IND':
+        #Asignamos las habitaciones individuales
+        cont = adultos
+
+      #Si es un APARTAMENTO PREMIUM, la capacidad máxima es de 4 adultos y 3 niños
+      if tipo_habitacion == 'A':
+        #Si hay más de 3 niños por adulto devolvemos error (0)
+        if adultos * 3 < niños:
+          return 0
+
+        #Asignamos los niños de 3 en 3 y cuatro adultos por habitación
+        cont = niños // 3
+        niños = niños % 3
+        adultos -= cont * 4
+
+        #Si sobran niños asignamos otra habitación con capacidad para 4 adultos más
+        if niños > 0:
+          cont += 1
+          adultos -= 4
+
+        #Si sobran adultos asignamos habitaciones de 4 adultos
+        if adultos > 0:
+          cont += adultos // 4
+          adultos = adultos % 4
+
+          #Última habitación si sobran adultos
+          if adultos > 0:
+            cont += 1
+
+      #Si es un ESTUDIO estándar o una habitación DOBLE SUPERIOR, independientemente de si es vista COTO o MAR,
+      #la capacidad máxima es de 3 adultos y 1 niño o 2 adultos y 2 niños
+      if tipo_habitacion in ('EC', 'EM', 'DSC', 'DSM'):
+        #Si hay más de 2 niños por adulto devolvemos error (0)
+        if adultos * 2 < niños:
+          return 0
+
+        #Asignamos los niños de 2 en 2 y dos adultos por habitación
+        cont = niños // 2
+        adultos -= cont * 2
+
+        #Asignamos habitaciones de 3 en 3
+        if adultos > 0:
+          cont += adultos // 3
+          adultos = adultos % 3
+
+          #Última habitación si sobran adultos
+          if adultos > 0:
+            cont += 1
+        #Si no sobran adultos pero sí un niño, asignaremos una habitación extra
+        elif niños % 2 == 1:
+          cont += 1
+
+      return cont
+
     precio_alojamiento=df['P_Alojamiento'].loc[df['Tip_Hab_Fra'] == room_type].mean()
     precio_desayuno=df['P_Desayuno'].loc[df['R_Factura'] == regimen[0]].mean()
     precio_almuerzo=df['P_Almuerzo'].loc[df['R_Factura'] == regimen[0]].mean()
     precio_cena= df['P_Cena'].loc[df['R_Factura'] == regimen[0]].mean()
-    
-    # precio_total=precio_alojamiento+precio_desayuno+precio_almuerzo+precio_cena
-
-
-
-
-
-
-    fecha_reserva = datetime.now()
 
     obj = {
     "Noches": noches,
     "Tip_Hab_Fra" : room_type,
-    "R_Factura": regimen[0],
+    "R_Factura": regimen,
     "AD": adultos,
     "NI":child,
     "CU":cunas,
@@ -145,12 +195,9 @@ def new_Booking(df, room_type, noches, adultos, child, cunas, fecha_entrada):
     'P_Cena': precio_cena,
     "Cantidad_Habitaciones": habitaciones(adultos,child,room_type),
     'Mes_Entrada' : fecha_entrada.strftime('%B'),
-    'Mes_Venta': datetime.now().strftime('%B'),
-    'Antelacion': (fecha_entrada-fecha_reserva).days
+    'Mes_Venta': today.strftime('%B'),
+    'Antelacion': (fecha_entrada-fecha_today).days
     }
-
-
-
     return obj
 
 
@@ -186,18 +233,7 @@ def predict_date_score(X, _obj):
     model = joblib.load("reg_random_forest.pkl")
 
     _score = model.predict(X[-1].reshape(1, -1))
-    # pred=predict_model(model,obj)
-    _days = float(_score)*_obj["Antelacion"]
-
-
-    # Obtener la fecha actual del sistema
-    fecha_actual = datetime.now()
-
-    # Sumar d�as a la fecha actual
-    _cancel_date = fecha_actual + timedelta(_days)
-    _cancel_date = _cancel_date.strftime("%d/%m/%Y")
-
-    return _cancel_date, _score[0]
+    return _score[0]
 
 def fix_cuote(_cancel_prob, _score):
     if _cancel_prob <= 0.50:
@@ -207,7 +243,47 @@ def fix_cuote(_cancel_prob, _score):
     else:
         return _score*0.5*_cancel_prob
 
+#Función cuota no reembolsable
+def func_no_reembolso(_obj, _cuota_media=0.10, _cuota_maxima=0.25, _umbral_inferior=0.25, _umbral_superior=0.4, model=random_forest, model_canc=random_forest_canc):
+        #Condiciones de control
+        if 0 <= _cuota_maxima <= 1:
+          if 0 <= _cuota_media <= 1:
+            if 0 <= _umbral_inferior <= 1:
+              if 0 <= _umbral_superior <= 1:
+                if _umbral_superior >_umbral_inferior:
 
+                  #Predicción de la probabilidad de cancelación
+                  _pred = predict_prob(_obj, model)
+
+                  #Según los distintos umbrales y dependiendo del score, las cancelaciones tendrán unas cuotas y fechas de cancelación 
+                  if _pred < _umbral_inferior:
+                    if predict_date_score(_obj,model_canc)<0.5:
+                      st.write(f"¡¡Aviso de posible cancelación tardía!!")
+                      st.write(f"Riesgo bajo de cancelación.\nEl huésped podrá cancelar sin coste hasta 7 días antes del {_obj['Fecha entrada']}")
+                    else:
+                      st.write(f"Riesgo bajo de cancelación.\nEl huésped podrá cancelar sin coste hasta 24 horas antes del {_obj['Fecha entrada']}")
+                  elif _pred > _umbral_superior:
+                    if predict_date_score(_obj,model_canc)<0.5:
+                      st.write(f"¡¡Aviso de posible cancelación tardía!!")
+                      st.write(f"Riesgo alto de cancelación.\nEl huésped podrá cancelar perdiendo un {(_cuota_maxima)*100:.1f}% del Precio total hasta 30 días antes del {_obj['Fecha entrada']}")
+                    else:
+                      st.write(f"Riesgo alto de cancelación.\nEl huésped podrá cancelar perdiendo un {(_cuota_maxima)*100:.1f}% del Precio total hasta 7 días antes del {_obj['Fecha entrada']}")
+                  else:
+                    if predict_date_score(_obj,model_canc)<0.5:
+                      st.write(f"¡¡Aviso de posible cancelación tardía!!")
+                      st.write(f"Riesgo moderado de cancelación.\nEl huésped podrá cancelar perdiendo un {(_cuota_media)*100:.1f}% del Precio total hasta 14 días antes del {_obj['Fecha entrada']}")
+                    else:
+                      st.write(f"Riesgo moderado de cancelación.\nEl huésped podrá cancelar perdiendo un {(_cuota_media)*100:.1f}% del Precio total hasta 48 horas antes del {_obj['Fecha entrada']}")
+                else:
+                  raise ValueError("El valor de ´umbral_superior´  tiene que ser mayor que ´umbral_inferior´.")
+              else:
+                raise ValueError("El valor ´umbral_superior´ debe estar entre 0 y 1.")
+            else:
+              raise ValueError("El valor ´umbral_inferior´ debe estar entre 0 y 1.")
+          else:
+            raise ValueError("El valor ´cuota_media´ debe estar entre 0 y 1.")
+        else:
+          raise ValueError("El valor ´cuota_maxima´ debe estar entre 0 y 1.")
 
 def predictions(room_type, noches, adultos, child, cunas, fecha_entrada):
     cancel_data = load_cancel_data()
