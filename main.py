@@ -72,30 +72,29 @@ if page_selected == "Flamero":
     with st.form("booking_info"):
         c_body.markdown('<h3>Compruebe disponibilidad:</h3>', unsafe_allow_html=True)
 
-
-        entry_date = pd.to_datetime(c_body.date_input(label = "Seleccione la fecha deentrada (Las fechas estan acotadas para los dias disponibles):",
-                value = pd.to_datetime('1/6/2024', dayfirst=True),
-                min_value=pd.to_datetime('1/6/2024', dayfirst=True),
-                max_value=pd.to_datetime('30/9/2024',dayfirst=True),
-                on_change=None, format="DD/MM/YYYY"), dayfirst=True)
-        
-        today = pd.to_datetime(c_body.date_input(label = "QUe dia es hoy (Funcionalidad disponible solo para la presentación para cambiar el dia de en que se reserva):",
-
+        today = pd.to_datetime(c_body.date_input(label = "¿Qué día es hoy?",
+                min_value=pd.to_datetime(datetime.now()),
                 max_value=pd.to_datetime('30/9/2024',dayfirst=True),
                 on_change=None), dayfirst=True)
         
+        entry_date = pd.to_datetime(c_body.date_input(label = "Seleccione la fecha de entrada (Las fechas están acotadas para los días disponibles):",
+                value = pd.to_datetime('15/6/2024', dayfirst=True),
+                min_value=pd.to_datetime('15/6/2024', dayfirst=True),
+                max_value=pd.to_datetime('30/9/2024',dayfirst=True),
+                on_change=None, format="DD/MM/YYYY"), dayfirst=True)
+        if (fecha_entrada<hoy):
+          st.write('Introduzca una fecha de entrada posterior al día de hoy')
+          return 0
+            
         col_1, col_2, col_3 = c_body.columns(3)
 
         noches = int(col_1.number_input('Seleccione la cantidad de noches:',min_value=1))
 
         adultos = int(col_2.number_input('Cantidad de adultos:',min_value=1))
 
-        child = int(col_3.number_input('Cantidad de menores de edad:',min_value=0))
+        child = int(col_3.number_input('Cantidad de niños:',min_value=0))
 
-        if col_3.checkbox("Necesita cunas en la habitacion?", disabled=bool(not child)):
-            cunas = int(col_3.number_input('Cuantas?:',min_value=1))
-        else:
-            cunas = 0
+        cunas=int(col_3.number_input('Seleccione el número de cunas:',min_value=0))
 
         if child>0:
             room_type_id_pointer = col_1.radio('Seleccione un tipo de habitacion que desea:',
