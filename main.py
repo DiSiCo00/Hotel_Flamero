@@ -82,9 +82,6 @@ if page_selected == "Flamero":
                 min_value=pd.to_datetime('15/6/2024', dayfirst=True),
                 max_value=pd.to_datetime('30/9/2024',dayfirst=True),
                 on_change=None, format="DD/MM/YYYY"), dayfirst=True)
-        if (fecha_entrada<hoy):
-          st.write('Introduzca una fecha de entrada posterior al día de hoy')
-          return 0
             
         col_1, col_2, col_3 = c_body.columns(3)
 
