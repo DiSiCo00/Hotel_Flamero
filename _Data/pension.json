@@ -1,0 +1,7 @@
+{
+    "PENSIÓN COMPLETA" : {"ID": "PC"},
+    "MEDIA PENSIÓN ALMUERZO" : {"ID": "MPA"},
+    "MEDIA PENSIÓN CENA": {"ID": "MPC"},
+    "HABITACIÓN Y DESAYUNO": {"ID": "HD"},
+    "SOLO ALOJAMIENTO": {"ID": "SA"}
+}
