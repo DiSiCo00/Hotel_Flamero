@@ -219,8 +219,8 @@ def predictions(room_type, noches, adultos, child, cunas, fecha_entrada):
 
     X_cancel = new_data_to_model(cancel_data, obj)
 
-    cancel_prob = predict_cancel_prob(X_booking)
-    c_date, score = cancel_date(X_cancel, obj)
+    cancel_prob = predict_prob(X_booking)
+    c_date, score = predict_date_score(X_cancel, obj)
 
     cuota = fix_cuote(cancel_prob, score)
 
