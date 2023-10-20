@@ -34,6 +34,10 @@ with open("_Data/room_type.json", encoding='utf-8') as file:
     room_type_obj = json.load(file)
     file.close()
 
+with open("_Data/regimen.json", encoding='utf-8') as file:
+    regimen_obj = json.load(file)
+    file.close()
+
 
 st.set_page_config(layout= "wide",
                     page_title = "FlameroHotel")
@@ -93,15 +97,21 @@ if page_selected == "Flamero":
 
         cunas=int(col_3.number_input('Seleccione el número de cunas:',min_value=0))
 
-        if child>0:
+        if child==0:
             room_type_id_pointer = col_1.radio('Seleccione un tipo de habitacion que desea:',
-                            ['INDIVIDUAL','ESTUDIO COTO','ESTUDIO MAR','DOBLE SUPERIOR COTO', 'DOBLE SUPERIOR MAR',
-                            'APARTAMENTO PREMIUM','DELUXE VISTA COTO', 'DELUXE VISTA COTO', 'SUITE'])
+                            ['DOBLE SUPERIOR COTO', 'DOBLE SUPERIOR MAR', 'DELUXE VISTA COTO', 'DELUXE VISTA MAR', 
+                               'ESTUDIO COTO', 'ESTUDIO MAR', 'SUITE', 'APARTAMENTO PREMIUM', 'INDIVIDUAL'])
         else:
             room_type_id_pointer = col_1.radio('Seleccione un tipo de habitacion que desea:',
-                            ['DOBLE SUPERIOR COTO', 'DOBLE SUPERIOR MAR', 'DELUXE VISTA COTO', 'ESTUDIO COTO', 'ESTUDIO MAR', 'SUITE'])
+                            ['DOBLE SUPERIOR COTO', 'DOBLE SUPERIOR MAR', 'DELUXE VISTA COTO', 'ESTUDIO COTO', 
+                             'ESTUDIO MAR', 'SUITE', 'APARTAMENTO PREMIUM'])
         
         room_type = room_type_obj[room_type_id_pointer]["ID"]
+
+        regimen_id_pointer = col_2.radio('Seleccione un régimen de entre los siguientes:',
+                            ['PENSIÓN COMPLETA', 'MEDIA PENSIÓN CON ALMUERZO','MEDIA PENSIÓN CON CENA', 'HABITACIÓN Y DESAYUNO', 'SOLO ALOJAMIENTO'])
+
+        regimen = regimen[regimen_id_pointer]["ID"]
         
         submitted = st.form_submit_button("Submit")
 
@@ -113,26 +123,29 @@ if page_selected == "Flamero":
             
                 msg = st.toast('"Recopilando Información"...')
                 time.sleep(2)
-                # cancel_data = load_cancel_data()
-                # reservas = load_booking_data()
+                cancel_data = load_cancel_data()
+                reservas = load_booking_data()
 
                 msg.toast("Chequeando disponibilidad...")
                 time.sleep(2)
-                # obj = new_Booking(reservas, room_type, noches, adultos, child, cunas, entry_date)
+                obj = new_Booking(reservas, room_type, regimen, noches, adultos, child, cunas, today, entry_date)
 
-                # X_booking = new_data_to_model(reservas, obj)
+                if obj['Cantidad_Habitaciones']==0:
+                    st.write("La habitación no se adecúa a sus circunstancias. Seleccione otro tipo de habitación")
+                    break
+                X_booking = new_data_to_model(reservas, obj)
 
-                # X_cancel = new_data_to_model(cancel_data, obj)
+                X_cancel = new_data_to_model(cancel_data, obj)
 
                 msg.toast("Chequeando disponibilidad...")
                 time.sleep(2)
 
-                # cancel_prob = predict_prob(X_booking)
-                # cancel_date, score = predict_date_score(X_cancel, obj)
+                cancel_prob = predict_prob(X_booking)
+                cancel_date, score = predict_date_score(X_cancel, obj)
 
                 msg.toast("Estás de suerte!! Ahora buscaremos las habitaciones adecuadas...")
 
-                # cuota = fix_cuote(cancel_prob, score)
+                # cuota = func_no_reembolso(_obj)
                 time.sleep(2)
                 cancel_prob, c_date, cuota, obj, score = predictions(room_type, noches, adultos, child, cunas, entry_date )
 
