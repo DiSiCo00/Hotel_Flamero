@@ -127,10 +127,10 @@ if page_selected == "Flamero":
                 msg.toast("Chequeando disponibilidad...")
                 time.sleep(2)
 
-                # cancel_prob = predict_cancel_prob(X_booking)
-                # cancel_date, score = cancel_date(X_cancel, obj)
+                # cancel_prob = predict_prob(X_booking)
+                # cancel_date, score = predict_date_score(X_cancel, obj)
 
-                msg.toast("Estas de suerte!! Ahora buscaremos lahabitacione adecuada...")
+                msg.toast("Estás de suerte!! Ahora buscaremos las habitaciones adecuadas...")
 
                 # cuota = fix_cuote(cancel_prob, score)
                 time.sleep(2)
