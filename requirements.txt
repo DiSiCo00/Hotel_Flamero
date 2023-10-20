@@ -1,0 +1,6 @@
+scikit-learn==1.2.2
+streamlit-option-menu
+nltk
+translate
+openai==0.27.8
+requests
